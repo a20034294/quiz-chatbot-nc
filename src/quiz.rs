@@ -1,5 +1,6 @@
 use super::buftcpstream::*;
 use super::config::*;
+use rand::prelude::*;
 use std::fmt::Write;
 use std::io;
 
@@ -12,6 +13,8 @@ pub struct Quiz<'a> {
     ss: &'a mut BufTcpStream,
     player: json::JsonValue,
     problems: json::JsonValue,
+    true_provoke: json::JsonValue,
+    false_provoke: json::JsonValue,
 }
 impl<'a> Quiz<'a> {
     pub fn new(ss: &'a mut BufTcpStream) -> io::Result<Self> {
@@ -46,11 +49,29 @@ impl<'a> Quiz<'a> {
             panic!()
         }
 
+        let true_provoke = get(server.clone() + "/v1/provokes?correct=true");
+
+        if true_provoke["status"]["status_code"] != 200 {
+            ss.print("!!!Quiz Server Failed!!!");
+            println!("[Error] Get provoke failed");
+            panic!()
+        }
+
+        let false_provoke = get(server.clone() + "/v1/provokes?correct=false");
+
+        if false_provoke["status"]["status_code"] != 200 {
+            ss.print("!!!Quiz Server Failed!!!");
+            println!("[Error] Get provoke failed");
+            panic!()
+        }
+
         Ok(Self {
             nickname,
             ss,
             player,
             problems,
+            true_provoke,
+            false_provoke,
         })
     }
     pub fn get_problems_count(&self) -> i32 {
@@ -113,10 +134,21 @@ impl<'a> Quiz<'a> {
         }
         let mut correctness = false;
         if input == self.problems["data"][i as usize]["answer"].to_string() {
-            self.ss.print("----------\nCorrect!\n----------\n");
+            let rnum = rand::thread_rng().gen_range(0, self.true_provoke["data"].len());
+            self.ss.print("----------\n");
+            self.ss
+                .print(self.true_provoke["data"][rnum]["message"].as_str().unwrap());
+            self.ss.print("\n----------\n");
             correctness = true;
         } else {
-            self.ss.print("----------\nFalse!\n----------\n");
+            let rnum = rand::thread_rng().gen_range(0, self.false_provoke["data"].len());
+            self.ss.print("----------\n");
+            self.ss.print(
+                self.false_provoke["data"][rnum]["message"]
+                    .as_str()
+                    .unwrap(),
+            );
+            self.ss.print("\n----------\n");
         }
         let data = json::object! {
             player_name: self.player["data"]["name"].as_str(),

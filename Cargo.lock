@@ -598,6 +598,7 @@ name = "quiz-chatbot-nc"
 version = "1.0.0"
 dependencies = [
  "json",
+ "rand",
  "reqwest",
  "tokio",
 ]
