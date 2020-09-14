@@ -20,7 +20,8 @@ impl BufTcpStream {
         if buffer.len() == 0 {
             panic!()
         }
-        buffer.pop();
+        buffer = buffer.replace("\r", "");
+        buffer = buffer.replace("\n", "");
         buffer
     }
 }
@@ -39,8 +40,8 @@ impl Print<i32> for BufTcpStream {
         self.output.flush().unwrap();
     }
 }
-impl Print<&'static str> for BufTcpStream {
-    fn print(&mut self, s: &'static str) {
+impl Print<&str> for BufTcpStream {
+    fn print(&mut self, s: &str) {
         write!(self.output, "{}", s).unwrap();
         self.output.flush().unwrap();
     }

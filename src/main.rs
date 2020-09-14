@@ -16,9 +16,11 @@ fn handle_client(stream: TcpStream) {
 
     println!("Client Connect From: {}:{}", ip, port);
     let mut quiz = Quiz::new(&mut ss).unwrap();
-    loop {
-        quiz.echo();
+    for p_now in 0..quiz.get_problems_count() {
+        quiz.print_problem(p_now);
+        quiz.ans_problem(p_now);
     }
+    quiz.end_quiz();
 }
 
 fn main() -> std::io::Result<()> {
