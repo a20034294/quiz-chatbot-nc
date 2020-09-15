@@ -17,7 +17,11 @@ pub fn get_token(payload: String) -> String {
     token
 }
 pub fn verify_token(token: String) -> bool {
-    let v: Vec<&str> = token.split(".").collect();
+    // Escape some charactor
+    let mut clear = token.replace("\t", "");
+    clear = clear.replace(" ", "");
+
+    let v: Vec<&str> = clear.split(".").collect();
     if v.len() != 2 {
         return false;
     }

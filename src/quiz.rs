@@ -49,7 +49,7 @@ impl<'a> Quiz<'a> {
                 panic!()
             }
 
-            ss.print(format!("{}成功載入 繼續遊戲\n", player_name));
+            ss.print(format!("\nPlayer: {} 成功載入 繼續遊戲\n", player_name));
         } else {
             ss.print("新遊戲 請輸入暱稱:\n");
             let nickname = ss.read();
@@ -108,36 +108,41 @@ impl<'a> Quiz<'a> {
         self.problems["data"].len() as i32
     }
     pub fn print_problem(&mut self, i: i32) {
+        self.ss.print(format!(
+            "第 {}/{} 題:\n",
+            i + 1,
+            self.problems["data"].len()
+        ));
         self.ss.print(
             self.problems["data"][i as usize]["description"]
                 .as_str()
                 .unwrap(),
         );
-        self.ss.print("\n");
+        self.ss.print("\n(A) ");
         self.ss.print(
             self.problems["data"][i as usize]["option_a"]
                 .as_str()
                 .unwrap(),
         );
-        self.ss.print("\n");
+        self.ss.print("\n(B) ");
         self.ss.print(
             self.problems["data"][i as usize]["option_b"]
                 .as_str()
                 .unwrap(),
         );
-        self.ss.print("\n");
+        self.ss.print("\n(C) ");
         self.ss.print(
             self.problems["data"][i as usize]["option_c"]
                 .as_str()
                 .unwrap(),
         );
-        self.ss.print("\n");
+        self.ss.print("\n(D) ");
         self.ss.print(
             self.problems["data"][i as usize]["option_d"]
                 .as_str()
                 .unwrap(),
         );
-        self.ss.print("\n\nhint:\n");
+        self.ss.print("\nHint: ");
         self.ss
             .print(self.problems["data"][i as usize]["hint"].as_str().unwrap());
         self.ss.print("\n\nScore: ");
@@ -148,12 +153,12 @@ impl<'a> Quiz<'a> {
                 .unwrap()
                 .to_string(),
         );
-        self.ss.print(" Point(s).\n");
+        self.ss.print(" Point(s).\n\n");
     }
     pub fn ans_problem(&mut self, i: i32) {
         let mut input: String;
         loop {
-            self.ss.print("Please input answer[A,B,C,D]\n");
+            self.ss.print("Please input answer[A,B,C,D]\n> ");
             input = self.ss.read();
             match input.as_str() {
                 "A" | "B" | "C" | "D" => break,
@@ -210,30 +215,25 @@ impl<'a> Quiz<'a> {
             token
         ));
 
-        std::thread::sleep(std::time::Duration::from_secs(1));
+        std::thread::sleep(std::time::Duration::from_secs_f32(0.5));
         self.ss.print("AI 出題中...\n\n");
-        std::thread::sleep(std::time::Duration::from_secs(1));
+        std::thread::sleep(std::time::Duration::from_secs_f32(0.5));
     }
     pub fn end_quiz(&mut self) {
-        self.ss.print(".");
-        std::thread::sleep(std::time::Duration::from_secs_f32(0.3));
-        self.ss.print(".");
-        std::thread::sleep(std::time::Duration::from_secs_f32(0.3));
-        self.ss.print(".");
-        std::thread::sleep(std::time::Duration::from_secs_f32(0.3));
-        self.ss.print(".");
-        std::thread::sleep(std::time::Duration::from_secs_f32(0.3));
-        self.ss.print(".\n");
-        std::thread::sleep(std::time::Duration::from_secs_f32(0.3));
+        for _ in 0..10 {
+            self.ss.print(".");
+            std::thread::sleep(std::time::Duration::from_secs_f32(0.2));
+        }
         self.ss.print("AI 故障 沒有題目了\n");
         std::thread::sleep(std::time::Duration::from_secs(1));
-        self.ss.print("您的得分: ");
+        self.ss.print("CCNS 感謝您的遊玩\n");
 
         let server = String::from(QUIZ_SERVER) + "/v1/players/";
         let response = get(server + self.player["data"]["name"].as_str().unwrap());
-
+        self.ss.print("您的得分: ");
         self.ss
             .print(response["data"]["score"].as_i32().unwrap().to_string());
+
         self.ss.print("\n計分板: https://leaderboard.ccns.io\n");
         self.ss.print("\n社大時間為 9/24 晚上 歡迎你\n");
     }
