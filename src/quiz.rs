@@ -27,7 +27,11 @@ impl<'a> Quiz<'a> {
         ss.print("Hello World\n我們是電腦與網路愛好社 CCNS 感謝您遊玩本遊戲\n期待能在社博以及社大與您相見\n");
         ss.print("社大時間為 9/24 晚上 歡迎你\n");
         ss.print("如果要輸入密鑰繼續遊戲請直接輸入，否則請按 Enter\n");
-        let token = ss.read();
+
+        // Escape some charactor
+        let mut token = ss.read();
+        token = token.replace(" ", "");
+        token = token.replace("\t", "");
 
         if verify_token(token.clone()) == true {
             let v: Vec<&str> = token.split(".").collect();
