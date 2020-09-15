@@ -10,8 +10,10 @@ Ubuntu 18.04
     sudo apt install libssl-dev
 ```
 
-##  Usage
+## Usage
 ```bash
 cd quiz-chatbot-nc
+cp src/config-template.rs src/config.rs
+vim src/config.rs # Edit configs
 cargo run
 ```
