@@ -1,5 +1,6 @@
 use super::buftcpstream::*;
 use super::config::*;
+use super::token::*;
 use rand::prelude::*;
 use std::fmt::Write;
 use std::io;
@@ -9,36 +10,65 @@ extern crate reqwest;
 extern crate json;
 
 pub struct Quiz<'a> {
-    pub nickname: String,
     ss: &'a mut BufTcpStream,
     player: json::JsonValue,
     problems: json::JsonValue,
     true_provoke: json::JsonValue,
     false_provoke: json::JsonValue,
+    pub p_now: i32,
 }
 impl<'a> Quiz<'a> {
     pub fn new(ss: &'a mut BufTcpStream) -> io::Result<Self> {
+        let server = String::from(QUIZ_SERVER);
+        let player: json::JsonValue;
+        let mut p_now: i32 = 0;
+
         ss.print("Please Play This Game With UTF-8 Encode\n");
         ss.print("Hello World\n我們是電腦與網路愛好社 CCNS 感謝您遊玩本遊戲\n期待能在社博以及社大與您相見\n");
         ss.print("社大時間為 9/24 晚上 歡迎你\n");
-        ss.print("Please enter your nickname:\n");
-        let nickname = ss.read();
+        ss.print("如果要輸入密鑰繼續遊戲請直接輸入，否則請按 Enter\n");
+        let token = ss.read();
 
-        let mut name = String::from("");
-        write!(name, "{}{}", "nc-", nickname).unwrap();
-        let server = String::from(QUIZ_SERVER);
+        if verify_token(token.clone()) == true {
+            let v: Vec<&str> = token.split(".").collect();
+            let payload = v[0];
+            let player_data = json::parse(
+                String::from_utf8(base64::decode(payload).unwrap())
+                    .unwrap()
+                    .as_str(),
+            )
+            .unwrap();
+            let player_name = player_data["player_name"].as_str().unwrap();
+            p_now = player_data["p_now"].as_i32().unwrap() + 1;
 
-        let data = json::object! {
-            name: name.as_str(),
-            nickname: nickname.as_str(),
-            platform: "nc",
-        };
-        let player = json_post(server.clone() + "/v1/players", data);
+            player = get((server.clone() + "/v1/players/") + player_name);
 
-        if player["status"]["status_code"] != 201 {
-            println!("{}", player["status"]["status_code"]);
-            ss.print("Nickname duplicate, please reconnect and input another.\n");
-            panic!()
+            if player["status"]["status_code"] != 200 {
+                println!("{}", player["status"]["status_code"]);
+                ss.print("你可能暱稱用了太誇張的字元了，或是我們不小心打翻泡麵了，伺服器抓不到\n");
+                panic!()
+            }
+
+            ss.print(format!("{}成功載入 繼續遊戲\n", player_name));
+        } else {
+            ss.print("新遊戲 請輸入暱稱:\n");
+            let nickname = ss.read();
+
+            let mut name = String::from("");
+            write!(name, "{}{}", "nc-", nickname).unwrap();
+
+            let data = json::object! {
+                name: name.as_str(),
+                nickname: nickname.as_str(),
+                platform: "nc",
+            };
+            player = json_post(server.clone() + "/v1/players", data);
+
+            if player["status"]["status_code"] != 201 {
+                println!("{}", player["status"]["status_code"]);
+                ss.print("Nickname duplicate, please reconnect and input another.\n");
+                panic!()
+            }
         }
 
         let problems = get(server.clone() + "/v1/quizzes");
@@ -66,12 +96,12 @@ impl<'a> Quiz<'a> {
         }
 
         Ok(Self {
-            nickname,
             ss,
             player,
             problems,
             true_provoke,
             false_provoke,
+            p_now,
         })
     }
     pub fn get_problems_count(&self) -> i32 {
@@ -156,8 +186,12 @@ impl<'a> Quiz<'a> {
             correct: correctness,
         };
         let server = String::from(QUIZ_SERVER);
-        let response = json_post(server + "/v1/answers", data);
-        if response["status"]["status_code"] != 201 {
+        let response = json_post(server + "/v1/answers", data.clone());
+
+        if response["status"]["status_code"] == 409 {
+            self.ss
+                .print("此題已經作答過 跳過輸入(如果可以 請使用較新的金鑰)\n");
+        } else if response["status"]["status_code"] != 201 {
             println!(
                 "[Error] 送答案失敗 {} 不知道為什麼",
                 response["status"]["status_code"]
@@ -165,6 +199,17 @@ impl<'a> Quiz<'a> {
             self.ss.print("!!!Sorry Request Failed!!!\n");
             panic!()
         }
+
+        let game_record = json::object! {
+            player_name: self.player["data"]["name"].as_str(),
+            p_now: i,
+        };
+        let token = get_token(json::stringify(game_record));
+        self.ss.print(format!(
+            "目前答題密鑰，若中斷答題可使用此密鑰繼續遊戲:\n{}\n",
+            token
+        ));
+
         std::thread::sleep(std::time::Duration::from_secs(1));
         self.ss.print("AI 出題中...\n\n");
         std::thread::sleep(std::time::Duration::from_secs(1));

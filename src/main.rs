@@ -6,6 +6,7 @@ use quiz::*;
 pub mod buftcpstream;
 use buftcpstream::*;
 pub mod config;
+pub mod token;
 
 fn handle_client(stream: TcpStream) {
     let (ip, port) = (
@@ -16,7 +17,7 @@ fn handle_client(stream: TcpStream) {
 
     println!("Client Connect From: {}:{}", ip, port);
     let mut quiz = Quiz::new(&mut ss).unwrap();
-    for p_now in 0..quiz.get_problems_count() {
+    for p_now in quiz.p_now..quiz.get_problems_count() {
         quiz.print_problem(p_now);
         quiz.ans_problem(p_now);
     }
