@@ -174,14 +174,14 @@ impl<'a> Quiz<'a> {
         let mut correctness = false;
         if input == self.problems["data"][i as usize]["answer"].to_string() {
             let rnum = rand::thread_rng().gen_range(0, self.true_provoke["data"].len());
-            self.ss.print("----------\n");
+            self.ss.print("----------\nO ");
             self.ss
                 .print(self.true_provoke["data"][rnum]["message"].as_str().unwrap());
             self.ss.print("\n----------\n");
             correctness = true;
         } else {
             let rnum = rand::thread_rng().gen_range(0, self.false_provoke["data"].len());
-            self.ss.print("----------\n");
+            self.ss.print("----------\nX ");
             self.ss.print(
                 self.false_provoke["data"][rnum]["message"]
                     .as_str()
