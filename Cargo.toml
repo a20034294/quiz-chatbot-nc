@@ -4,6 +4,12 @@ version = "1.0.0"
 authors = ["a20034294"]
 edition = "2018"
 
+[profile.dev]
+opt-level = 0
+
+[profile.release]
+opt-level = 3
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
