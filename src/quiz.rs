@@ -161,18 +161,20 @@ impl<'a> Quiz<'a> {
     }
     pub fn ans_problem(&mut self, i: i32) {
         let mut input: String;
+        let mut ipt = String::from("");
         loop {
             self.ss.print("Please input answer[A,B,C,D]\n> ");
             input = self.ss.read();
             match input.as_str() {
-                "A" | "B" | "C" | "D" => break,
+                "A" | "B" | "C" | "D" => {ipt = input; break;},
+                "a" | "b" | "c" | "d" => {ipt = input.as_str().to_uppercase(); break;},
                 _ => self
                     .ss
                     .print("Input syntax wrong, please answer again[A,B,C,D]\n"),
             }
         }
         let mut correctness = false;
-        if input == self.problems["data"][i as usize]["answer"].to_string() {
+        if ipt == self.problems["data"][i as usize]["answer"].to_string() {
             let rnum = rand::thread_rng().gen_range(0, self.true_provoke["data"].len());
             self.ss.print("----------\nO ");
             self.ss
